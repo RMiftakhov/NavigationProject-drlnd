@@ -1,4 +1,5 @@
-# The solution for the Unity Banana environment (project 1 - Navigation) 
+# The solution for the Unity Banana environment (project 1 - Navigation)
+![Banana-gif](https://github.com/RMiftakhov/NavigationProject-drlnd/blob/master/banana-gif.gif)
 The code is based on materials from Udacity Deep Reinforcement Learning Nanodegree Program.
 
 ## Project Details
