@@ -2,7 +2,7 @@ import numpy as np
 import random
 from collections import namedtuple, deque
 
-from model import QNetwork, DuelingQNetwork
+from model import QNetwork, DuelingQNetwork, ConvolutionalQNetwork
 
 import torch
 import torch.nn.functional as F
@@ -20,7 +20,7 @@ device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 class Agent():
     """Interacts with and learns from the environment."""
 
-    def __init__(self, state_size, action_size, seed):
+    def __init__(self, state_size, action_size, seed, network="Dueling", stepkey="Double"):
         """Initialize an Agent object.
         
         Params
@@ -29,13 +29,23 @@ class Agent():
             action_size (int): dimension of each action
             seed (int): random seed
         """
+        print ("Architecture: " + str(network) + " " + str(stepkey) + " DQN")
+        self.stepkey = stepkey
         self.state_size = state_size
         self.action_size = action_size
         self.seed = random.seed(seed)
 
         # Q-Network
-        self.qnetwork_local = DuelingQNetwork(state_size, action_size, seed).to(device)
-        self.qnetwork_target = DuelingQNetwork(state_size, action_size, seed).to(device)
+        if (network=="Dueling"):
+            self.qnetwork_local = DuelingQNetwork(state_size, action_size, seed).to(device)
+            self.qnetwork_target = DuelingQNetwork(state_size, action_size, seed).to(device)
+        elif (network=="Convolutional"):
+            self.qnetwork_local = ConvolutionalQNetwork(state_size, action_size, seed).to(device)
+            self.qnetwork_target = ConvolutionalQNetwork(state_size, action_size, seed).to(device)             
+        else:
+            self.qnetwork_local = QNetwork(state_size, action_size, seed).to(device)
+            self.qnetwork_target = QNetwork(state_size, action_size, seed).to(device) 
+        print (self.qnetwork_local)
         self.optimizer = optim.Adam(self.qnetwork_local.parameters(), lr=LR)
 
         # Replay memory
@@ -53,7 +63,10 @@ class Agent():
             # If enough samples are available in memory, get random subset and learn
             if len(self.memory) > BATCH_SIZE:
                 experiences = self.memory.sample()
-                self.learn(experiences, GAMMA)
+                if (self.stepkey == "Double"):
+                    self.learn_DDQN_git(experiences, GAMMA)
+                else:
+                    self.learn(experiences, GAMMA)
 
     def act(self, state, eps=0.):
         """Returns actions for given state as per current policy.
